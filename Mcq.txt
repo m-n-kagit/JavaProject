@@ -1,0 +1,140 @@
+Q1. Which of the following is not a primitive data type in Java?
+a) int
+b) float
+c) boolean
+d) string
+Ans. D
+
+Q2. What is the size of an int variable in Java?
+a) 4 bytes
+b) 2 bytes
+c) 8 bytes
+d) 1 byte
+Ans. A
+
+Q3. Which keyword is used to inherit a class in Java?
+a) implement
+b) extends
+c) inherits
+d) interface
+Ans. B
+
+Q4. What is the default value of a boolean variable in Java?
+a) true
+b) false
+c) 0
+d) null
+Ans. B
+
+Q5. Which of the following is used to handle exceptions in Java?
+a) try-catch
+b) throw
+c) throws
+d) All of the above
+Ans. D
+
+Q6. Which method is the entry point of any Java program?
+a) start()
+b) init()
+c) main()
+d) run()
+Ans. C
+
+Q7. What is the superclass of all classes in Java?
+a) Object
+b) Class
+c) Super
+d) Base
+Ans. A
+
+Q8. What will System.out.println(10 + 20 + "30"); output?
+a) 102030
+b) 3030
+c) 3030
+d) 30
+Ans. A
+
+Q9. What is the output of: System.out.println("30" + 10 + 20);?
+a) 60
+b) 3020
+c) 301020
+d) 30 + 10 + 20
+Ans. C
+
+Q10. Which of these is a loop structure in Java?
+a) if
+b) switch
+c) for
+d) break
+Ans. C
+
+Q11. Which keyword is used to create an object in Java?
+a) class
+b) new
+c) this
+d) static
+Ans. B
+
+Q12. Which keyword is used to prevent inheritance?
+a) static
+b) const
+c) final
+d) protected
+Ans. C
+
+Q13. What does the break statement do in Java loops?
+a) Continues to next iteration
+b) Terminates the loop
+c) Skips current iteration
+d) Pauses loop
+Ans. B
+
+Q14. What type of inheritance does Java not support directly?
+a) Multilevel
+b) Hierarchical
+c) Multiple
+d) Single
+Ans. C
+
+Q15. Which of the following is true about constructors in Java?
+a) They can be inherited
+b) They have a return type
+c) They initialize objects
+d) They are called manually
+Ans. C
+
+Q16. Which access modifier allows access only within the same package?
+a) private
+b) protected
+c) public
+d) default
+Ans. D
+
+Q17. What does this keyword refer to in Java?
+a) Static context
+b) Parent class
+c) Current object
+d) Class name
+Ans. C
+
+Q18. Which file handling class is used for reading text files line by line?
+a) File
+b) FileReader
+c) BufferedReader
+d) Scanner
+Ans. C
+
+Q19. Which of these is not part of Java exception hierarchy?
+a) Throwable
+b) Error
+c) Exception
+d) Crash
+Ans. D
+
+Q20. Which interface is used for functional programming in Java 8?
+a) Runnable
+b) Serializable
+c) FunctionalInterface
+d) Comparator
+Ans. C
+

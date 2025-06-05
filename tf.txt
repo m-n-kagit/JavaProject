@@ -1,0 +1,59 @@
+Q1. Java is a statically typed language.
+Ans. T
+
+Q2. The final keyword in Java is used to define constants.
+Ans. F
+
+Q3. In Java, int and Integer are exactly the same.
+Ans. F
+
+Q4. A Java class can have multiple public constructors.
+Ans. T
+
+Q5. System.out.println() is used for input in Java.
+Ans. F
+
+Q6. The default value of an uninitialized boolean variable is false.
+Ans. T
+
+Q7. Java supports multiple inheritance using classes.
+Ans. F
+
+Q8. JVM stands for Java Virtual Machine.
+Ans. T
+
+Q9. The static keyword allows access without creating an object.
+Ans. T
+
+Q10. Java code can run without the main method.
+Ans. F
+
+Q11. Java supports method overloading.
+Ans. T
+
+Q12. An interface in Java can have method implementations.
+Ans. T
+
+Q13. Java is an interpreted language only.
+Ans. F
+
+Q14. String is a primitive data type in Java.
+Ans. F
+
+Q15. You can extend multiple classes in Java.
+Ans. T
+
+Q16. Java’s == compares object values by default.
+Ans. F
+
+Q17. The this keyword in Java refers to the current class object.
+Ans. T
+
+Q18. A try block must always be followed by a catch block.
+Ans. F
+
+Q19. Java has garbage collection to free unused memory.
+Ans. T
+
+Q20. An abstract class can be instantiated.
+Ans. F

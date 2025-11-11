@@ -220,7 +220,6 @@ class Read_class {
             ans[i] = q[1].substring(q[1].indexOf('.') + 1).trim();
             System.out.print("Your answer: ");
             arr[i] = sc.nextLine().trim();
-
             i++;
         }
 

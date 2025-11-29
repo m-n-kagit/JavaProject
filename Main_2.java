@@ -128,7 +128,126 @@ class Player {
 }
 
 class Admin {
+    int admin_id;
+    String role, passcode, name, email_id;
+    boolean want_continue = true;
+    String url = "jdbc:mysql://localhost:3306/quiz_application";
+    String user = "root";
+    String password = "yuv07";
 
+    Admin(int choice) {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        Connection con = DriverManager.getConnection(url, user, password);
+        Scanner sc = new Scanner(System.in);
+        Statement stmt = con.createStatement();
+        ResultSet rs;
+        switch (choice) {
+            case 1: // login
+                do {
+                    System.out.println("Enter email id:");
+                    String emp_id = sc.nextLine();
+                    System.out.println("Enter passcode:");
+                    String temp_pass = sc.nextLine();
+
+                    rs = stmt.executeQuery("Select * from admin where email_id='" + emp_id
+                            + "' and admin_passcode='" + temp_pass + "'");
+
+                    if (rs.next()) {
+                        display_details(rs);
+                        break;
+                    } else {
+                        System.out.println("Provided Id or passcode invalid:");
+                        if (ask_user()) {
+
+                            continue;
+                        } else {
+                            this.want_continue = false;
+                            break;
+                        }
+
+                    }
+
+                } while (true);
+
+                
+                break;
+
+                case 2:
+                    System.out.println("Enter your name:");
+                this.name = sc.nextLine();
+                do {
+                    System.out.println("Enter your email id (e.g. quiz_app@gmail.com):");
+                    this.email_id = sc.nextLine();
+                    String regex = "^[a-z\\dA-Z.+_%]+@[A-Z\\da-z]+\\.[A-Z\\da-z]+$"; // after . only those @ characters
+
+                    if (email_id.matches(regex)) {
+                        while (true) {
+                            System.out.println("Enter your passcode:\n(The passcode must be of 6 letters atleast) ");
+                            String temp = sc.nextLine();
+                            System.out.println("Confirm your passcode:");
+                            String temp2 = sc.nextLine();
+
+                            if (temp.equals(temp2) && temp.length() >= 6) {
+                                passcode = temp;
+                                break;
+                            } else {
+                                System.out.println("Invalid (Passcode not accepted)");
+                                continue;
+                            }
+
+                        }
+
+                    } else {
+                        System.out.println("Not a valid email Id\nPlease enter valid email Id");
+
+                        continue;
+                    }
+
+                    System.out.println("Saving...\n");
+                    this.role = "player";
+                    stmt.execute("INSERT INTO admin (user_name,role,email_id,admin_passcode) VALUES('" + name
+                            + "','" + role + "','"
+                            + email_id + "', '" + passcode + "') ");
+                    System.out.println("Saved succesfully.");
+                    rs = stmt.executeQuery("Select user_Id from admin where user_name='" + this.name
+                            + "' and email_Id='" + this.email_id + "'");
+                    rs.next();
+                    this.player_id = rs.getInt("user_Id");
+                    break;
+                } while (true);
+                rs = stmt.executeQuery(
+                        "Select * from admin where user_name='" + this.name + "' and user_Id=" + this.player_id);
+                rs.next();
+                display_details(rs);
+                rs.close();
+                    break;
+        }
+
+
+    }
+    
+    public void display_details(ResultSet rs) throws Exception {
+        this.name = rs.getString("user_Name");
+        this.email_id = rs.getString("email_id");
+        this.role = "Player";
+        this.player_id = rs.getInt("user_Id");
+        System.out.println("Your details are as follows:\nPlayer ID:" + this.player_id + "\nName:" + this.name
+                + "\nEmail ID:" + this.email_id);
+    }
+
+    boolean ask_user() {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Press 1 for retry or anything else for escape:");
+        int press = sc.nextInt();
+
+        if (press == 1) {
+            return true;
+        } else {
+            System.out.println("[Back to the previous section]");
+            return false;
+        }
+
+    }
 }
 
 class Question {
@@ -225,9 +344,8 @@ class Quiz_Session { // implementing attempt database
             choice1 = sc.nextInt();
             sc.nextLine();
             sub = subjects.get(choice1 - 1);
-            java.util.List<Question> problems = new ArrayList<>();
-            java.util.List<String[]> options = new ArrayList<>(); // [[op1,op2,op3,op4],[op11,op22,op33,op44],...]
             i = 1;
+            java.util.List<Question> problems = new ArrayList<>();
 
             rs = stmt
                     .executeQuery("Select question_text,q_id,ans from " + this.type + " where quiz_id = " + this.quiz_id
@@ -236,6 +354,7 @@ class Quiz_Session { // implementing attempt database
                 // Now we want 10 questions to be generated in random manner with options
                 // first question will be displayed and options or ans will be asked from the
                 // user
+                java.util.List<String[]> options = new ArrayList<>(); // [[op1,op2,op3,op4],[op11,op22,op33,op44],...]
 
                 List<Answer> o_ans = new ArrayList<>();
 
@@ -293,7 +412,13 @@ class Quiz_Session { // implementing attempt database
                     i++;
                 }
                 long end = System.currentTimeMillis();
-                long time_taken = (end - start) / 1_000;
+                long time_taken = (end - start) / 1_000; // only in seconds
+                long seconds = time_taken;
+                String formatted_time = String.format("%02d:%02d:%02d",
+                        seconds / 3600,
+                        (seconds % 3600) / 60,
+                        seconds % 60);
+
                 LocalDateTime now = LocalDateTime.now();
 
                 // Format to MySQL DATETIME format: "YYYY-MM-DD HH:MM:SS"
@@ -302,20 +427,154 @@ class Quiz_Session { // implementing attempt database
                 System.out.println("Your Score in this quiz: " + marks + "\nTime Taken: " + time_taken);
                 System.out.println("Saving your result...");
                 stmt.execute("Insert into attempt values(" + p1.player_id + "," + this.quiz_id + ",'"
-                        + mysqlDateTime + "'," + marks + "," + time_taken + ")");
+                        + mysqlDateTime + "'," + marks + "," + formatted_time + ",'" + sub + "')");
                 System.out.println("Saved successfully..");
 
             } else if (this.type.equals("sa")) {
+                // Now we want 10 questions to be generated in random manner
+                // first question will be displayed and options or ans will be asked from the
+                // user
+                List<Answer> o_ans = new ArrayList<>();
+
+                while (rs.next() && i <= 10) { // only 10 questions will be added
+                    Question ques = new Question();
+                    Answer ans1 = new Answer();
+                    ques.question_text = rs.getString("question_text");
+                    ques.qid = rs.getInt("q_id");
+                    ans1.qid = rs.getInt("q_id");
+                    ans1.correct_ans = rs.getString("ans");
+                    o_ans.add(ans1);
+                    problems.add(ques);
+                    i++;
+
+                }
+
+                // below i'am assigning options and displaying the corresponding question
+                System.out.println("\n--------------------SHORT INT TYPE QUESTIONS-----------------");
+                System.out.println("SUBJECT: " + sub);
+                System.out.println("Write answers in INTEGERS");
+                Random rand = new Random();
+                java.util.Set chosen_numbers = new HashSet<>();
+                String[] ans = new String[10];
+                i = 0;
+                int marks = 0;
+
+                long start = System.currentTimeMillis();
+                while (i < 10) { // game section
+                    int chosen_problem = rand.nextInt(problems.size());
+                    if (chosen_numbers.contains(chosen_problem)) {
+                        continue;
+                    }
+                    chosen_numbers.add(chosen_problem);
+                    System.out.println(problems.get(chosen_problem).question_text);
+                    ans[i] = sc.nextLine();
+                    ans[i] = ans[i].toUpperCase().trim();
+                    if (ans[i].equals(o_ans.get(chosen_problem).correct_ans)) {
+                        marks++;
+                    }
+                    i++;
+                }
+                long end = System.currentTimeMillis();
+                long time_taken = (end - start) / 1_000; // only in seconds
+                long seconds = time_taken;
+                String formatted_time = String.format("%02d:%02d:%02d",
+                        seconds / 3600,
+                        (seconds % 3600) / 60,
+                        seconds % 60);
+
+                LocalDateTime now = LocalDateTime.now();
+
+                // Format to MySQL DATETIME format: "YYYY-MM-DD HH:MM:SS"
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String mysqlDateTime = now.format(formatter);
+                System.out.println("Your Score in this quiz: " + marks + "\nTime Taken: " + time_taken);
+                System.out.println("Saving your result...");
+                stmt.execute("Insert into attempt values(" + p1.player_id + "," + this.quiz_id + ",'"
+                        + mysqlDateTime + "'," + marks + ",'" + formatted_time + "','" + sub + "')");
+                System.out.println("Saved successfully..");
+
             } else if (this.type.equals("tf")) {
+                // Now we want 10 questions to be generated in random manner
+                // first question will be displayed and options or ans will be asked from the
+                // user
+                List<Answer> o_ans = new ArrayList<>();
+
+                while (rs.next() && i <= 10) { // only 10 questions will be added
+                    Question ques = new Question();
+                    Answer ans1 = new Answer();
+                    ques.question_text = rs.getString("question_text");
+                    ques.qid = rs.getInt("q_id");
+                    ans1.qid = rs.getInt("q_id");
+                    ans1.correct_ans = rs.getString("ans");
+                    o_ans.add(ans1);
+                    problems.add(ques);
+                    i++;
+
+                }
+
+                // below i'am assigning options and displaying the corresponding question
+                System.out.println("\n--------------------TRUE/FALSE TYPE QUESTIONS-----------------");
+                System.out.println("SUBJECT: " + sub);
+                System.out.println("Write answers in T/F or t/f");
+                Random rand = new Random();
+                java.util.Set chosen_numbers = new HashSet<>();
+                String[] ans = new String[10];
+                i = 0;
+                int marks = 0;
+
+                long start = System.currentTimeMillis();
+                while (i < 10) { // game section
+                    int chosen_problem = rand.nextInt(problems.size());
+                    if (chosen_numbers.contains(chosen_problem)) {
+                        continue;
+                    }
+                    chosen_numbers.add(chosen_problem);
+                    System.out.println(problems.get(chosen_problem).question_text);
+                    ans[i] = sc.nextLine();
+                    ans[i] = ans[i].toUpperCase().trim();
+                    if (ans[i].equals(o_ans.get(chosen_problem).correct_ans)) {
+                        marks++;
+                    }
+                    i++;
+                }
+                long end = System.currentTimeMillis();
+                long time_taken = (end - start) / 1_000; // only in seconds
+                long seconds = time_taken;
+                String formatted_time = String.format("%02d:%02d:%02d",
+                        seconds / 3600,
+                        (seconds % 3600) / 60,
+                        seconds % 60);
+
+                LocalDateTime now = LocalDateTime.now();
+
+                // Format to MySQL DATETIME format: "YYYY-MM-DD HH:MM:SS"
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String mysqlDateTime = now.format(formatter);
+                System.out.println("Your Score in this quiz: " + marks + "\nTime Taken: " + time_taken);
+                System.out.println("Saving your result...");
+                String sql = "INSERT INTO attempt (user_id, quiz_id, attempt_at, score, time_taken, subject) "
+                        + "VALUES (?, ?, ?, ?, ?, ?)";
+
+                PreparedStatement ps = con.prepareStatement(sql);
+                ps.setInt(1, p1.player_id);
+                ps.setInt(2, this.quiz_id);
+                ps.setString(3, mysqlDateTime);
+                ps.setInt(4, marks);
+                ps.setString(5, formatted_time); // 00:00:15 stored correctly
+                ps.setString(6, sub);
+
+                ps.executeUpdate();
+                ps.close();
+
+                System.out.println("Saved successfully..");
+
             }
             System.out.println(
-                    "Choose the below option:\n1. Want to see where you stand in the quiz\n2. Play another quiz with same catogory\n3. Play another quiz with different category.");
+                    "Choose the below option:\n1. Play another quiz with same catogory\n2. Play another quiz with different category.");
             choice1 = sc.nextInt();
             if (choice1 == 1) {
-                ask_stand(p1);
-            } else if (choice1 == 2) {
                 continue;
-            } else if (choice == 3) {
+            } else if (choice1 == 2) {
                 break;
             } else {
                 if (ask_user()) {
@@ -343,19 +602,6 @@ class Quiz_Session { // implementing attempt database
 
     }
 
-    void ask_stand(Player p1) throws Exception {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        Connection con = DriverManager.getConnection(this.url, this.user, this.password);
-        Statement stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery(
-                "Select p.user_name,max(a.score) as best_score from player p join attempt a  attempt a on p.user_id=a.user_id where a.quiz_id="
-                        + this.quiz_id + " group by p.user_id  order by best_score desc ");
-        int i = 1;
-        while (rs.next()) {
-            System.out.println(i + " " + p1.name + "\nMarks:" + rs.getInt("score"));
-            i++;
-        }
-    }
 }
 
 public class Main_2 {
@@ -369,7 +615,7 @@ public class Main_2 {
         Scanner sc = new Scanner(System.in);
         while (true) {
 
-            System.out.println("\nChoose one of the options below\n1. Admin session\n2. Player Section\n0. Exit");
+            System.out.println("\nChoose one of the options below\n1. Admin section\n2. Player Section\n0. Exit");
             choice = sc.nextInt();
             sc.nextLine();
             if (choice == 1 || choice == 2) {
@@ -389,54 +635,84 @@ public class Main_2 {
                             Player p1 = new Player(choice2);
                             if (p1.want_continue) {
                                 while (true) { // for menu bar => catogory section
-                                    System.out.println("Welcome " + p1.name + " to world of quiz problems!");
+                                    System.out.println("\n+-------------------Welcome " + p1.name
+                                            + " to world of quiz problems!----------------------+");
                                     System.out.println("Select a catogory from below: ");
                                     System.out.println(
-                                            "1. General Knowledge\n2. Computer Technologies\n3. Science\n4. Mental Ability\n0. Back");
+                                            "1. General Knowledge\n2. Computer Technologies\n3. Science\n4. Mental Ability\n0. Log out");
                                     int cat_choice; // for catogory choice
                                     cat_choice = sc.nextInt() + 100;
                                     String cat_choice_name = get_cat_name(cat_choice);
-                                    System.out.println(
-                                            "Choose from the below options:\n1) Start Game\n2) See your analytics");
-                                    choice3 = sc.nextInt();
 
-                                    if (choice3 == 1) {
-                                        if (cat_choice == 101 || cat_choice == 102 || cat_choice == 103
-                                                || cat_choice == 104) {
-                                            Quiz_Session quiz1 = new Quiz_Session(p1, cat_choice);
+                                    if (cat_choice == 101 || cat_choice == 102 || cat_choice == 103
+                                            || cat_choice == 104) {
+                                        while (true) {
+                                            System.out.println(
+                                                    "Choose from the below options:\n1) Start Game\n2) See your analytics\n0) Back to previous section");
+                                            choice3 = sc.nextInt();
+
+                                            if (choice3 == 1) {
+                                                Quiz_Session quiz1 = new Quiz_Session(p1, cat_choice);
+                                            } else if (choice3 == 2) {
+                                                while (true) {
+                                                    System.out.println(
+                                                            "--------------------------Analytics Section---------------------------");
+                                                    System.out.println("Choose from below options:");
+                                                    System.out.println(
+                                                            "1) See scores of respective subjects\n2) See your rank among various players\n0) Back to previous section");
+                                                    int choice4 = sc.nextInt();
+                                                    if (choice4 == 1) {
+                                                        System.out.println(
+                                                                "+--------------------Scores & Attempt in respective subjects----------------------+");
+                                                        user_scores(p1, cat_choice);
+                                                        if (ask_user_back()) {
+                                                            continue;
+                                                        } else {
+                                                            break;
+                                                        }
+
+                                                    } else if (choice4 == 2) {
+                                                        System.out
+                                                                .println("+---------Rank Section of " + cat_choice_name
+                                                                        + "catogory----------+");
+                                                        ask_stand(p1, cat_choice);
+                                                        if (ask_user_back()) {
+                                                            continue;
+                                                        } else {
+                                                            break;
+                                                        }
+
+                                                    } else if (choice4 == 0) {
+                                                        break;
+                                                    } else {
+                                                        if (ask_user()) {
+                                                            continue;
+                                                        } else {
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            } else if (choice3 == 0) {
+                                                break;
+                                            } else {
+                                                if (ask_user()) {
+                                                    continue;
+                                                } else {
+
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                    } else if (cat_choice == 100) {
+                                        break;
+                                    } else {
+                                        if (ask_user()) {
+                                            continue;
                                         } else {
                                             break;
                                         }
-                                    } else if (choice3 == 2) {
-                                        while (true) {
-                                            System.out.println(
-                                                    "--------------------------Analytics Section---------------------------");
-                                            System.out.println("Choose from below options:");
-                                            System.out.println(
-                                                    "1) See scores of respective subjects\n2) See your rank among various players");
-                                            choice3 = sc.nextInt();
-                                            if (choice3 == 1) {
-                                                System.out.println("+--------------------Scores & Attemp in respective catogory ");
-                                                user_scores(p1);
-                                                if (ask_user_back()) {
-                                                    continue;
-                                                } else {
-                                                    break;
-                                                }
-
-                                            } else if (choice == 2) {
-                                                System.out.println("+---------Rank Section of "+cat_choice_name+"catogory----------+");
-                                                ask_stand(p1, cat_choice);
-                                                if (ask_user_back()) {
-                                                    continue;
-                                                } else {
-                                                    break;
-                                                }
-
-                                            }
-                                        }
                                     }
-
                                 }
 
                             } else {
@@ -465,7 +741,7 @@ public class Main_2 {
         }
     }
 
-    static void user_scores(Player p1, int cat_id) {
+    static void user_scores(Player p1, int cat_id) throws Exception {
         String url = "jdbc:mysql://localhost:3306/quiz_application";
         String user = "root";
         String password = "yuv07";
@@ -473,37 +749,44 @@ public class Main_2 {
         Connection con = DriverManager.getConnection(url, user, password);
         Statement stmt = con.createStatement();
         ResultSet rs = stmt.executeQuery(
-                "Select p.user_name,a.score,a.attempt_at,c.cat_name from player p join attempt a on p.user_id=a.user_id join quiz q on a.quiz_id=q.quiz_id join category c on q.cat_id=c.cat_id where p.user_name="
-                        + p1.name + " and q.cat_id=" + cat_id);
+                "Select p.user_name,a.score,a.attempt_at,c.cat_name,a.subject,q.difficulty from player p join attempt a on p.user_id=a.user_id join quiz q on a.quiz_id=q.quiz_id join category c on q.cat_id=c.cat_id where p.user_name='"
+                        + p1.name + "' and q.cat_id=" + cat_id);
 
         // Print table header only once before loop
-        System.out.printf("%-15s%-10s%-20s%-20s%n",
-                "Name", "Score", "Attempt Date", "Category");
+        System.out.printf("%-15s %-10s %-20s %-20s %-20s %-20s%n",
+                "Name", "Score", "Attempt Date", "Subject", "Category", "Difficulty");
 
         System.out.println("--------------------------------------------------------------");
 
         while (rs.next()) {
-            System.out.printf("%-15s%-10d%-20s%-20s%n",
+            System.out.printf("%-15s %-10d  %-20s  %-20s  %-20s  %-20s%n",
                     rs.getString("user_name"),
                     rs.getInt("score"),
                     rs.getString("attempt_at"),
-                    rs.getString("cat_name"));
+                    rs.getString("subject"),
+                    rs.getString("cat_name"),
+                    rs.getString("difficulty"));
         }
 
         rs.close();
 
     }
 
-    static string get_cat_name(int cat_id) {
+    static String get_cat_name(int cat_id) throws Exception {
         String url = "jdbc:mysql://localhost:3306/quiz_application";
         String user = "root";
         String password = "yuv07";
         Class.forName("com.mysql.cj.jdbc.Driver");
         Connection con = DriverManager.getConnection(url, user, password);
         Statement stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("Select cat_name from category where cat_id="+ cat_id);
-        String cat_name = rs.getString("cat_name");
-        rs.close();stmt.close();con.close();
+        ResultSet rs = stmt.executeQuery("Select cat_name from category where cat_id=" + cat_id);
+        String cat_name = "";
+        if (rs.next()) {
+            cat_name = rs.getString("cat_name");
+        }
+        rs.close();
+        stmt.close();
+        con.close();
         return cat_name;
 
     }
@@ -526,19 +809,49 @@ public class Main_2 {
         String url = "jdbc:mysql://localhost:3306/quiz_application";
         String user = "root";
         String password = "yuv07";
+
         Class.forName("com.mysql.cj.jdbc.Driver");
         Connection con = DriverManager.getConnection(url, user, password);
         Statement stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery(
-                "Select p.user_name,max(a.score) as best_score from player p join attempt a on p.user_id=a.user_id join quiz q on a.quiz_id = q.quiz_id where cat_id="
-                        + cat_choice + " group by p.user_name order by best_score desc, MIN(a.time_taken) asc");
+        String result_query = "SELECT p.user_name, a.subject, a.score AS best_score, q.difficulty, " +
+                "a.time_taken AS fastest_time " +
+                "FROM player p " +
+                "JOIN attempt a ON p.user_id = a.user_id " +
+                "JOIN quiz q ON a.quiz_id = q.quiz_id " +
+                "WHERE q.cat_id = " + cat_choice + " " +
+                "AND a.score = (SELECT MAX(a2.score) " +
+                "FROM attempt a2 JOIN quiz q2 ON a2.quiz_id = q2.quiz_id " +
+                "WHERE a2.user_id = a.user_id AND q2.cat_id = " + cat_choice + ") " +
+                "AND a.time_taken = (SELECT MIN(a3.time_taken) " +
+                "FROM attempt a3 JOIN quiz q3 ON a3.quiz_id = q3.quiz_id " +
+                "WHERE a3.user_id = a.user_id AND a3.score = a.score AND q3.cat_id = " + cat_choice + ") " +
+                "ORDER BY best_score DESC, fastest_time ASC";
+        ResultSet rs = stmt.executeQuery(result_query);
+
+        System.out.printf("%-6s %-20s %-20s %-10s%n", "Rank", "Player Name", "Subject", "Best Score");
+        System.out.println("---------------------------------------------------");
+
         int i = 1;
+        boolean hasResults = false;
+
         while (rs.next()) {
-            System.out.println("R.no.    |     Name");
-            System.out.println(i + "  " + rs.getString("user_name") + "  Marks: " + rs.getInt("best_score"));
+            hasResults = true;
+            System.out.printf("%-6d %-20s %-20s %-20s  %-10d%n",
+                    i,
+                    rs.getString("user_name"),
+                    rs.getString("subject"),
+                    rs.getString("difficulty"),
+                    rs.getInt("best_score"));
             i++;
         }
-        rs.close();stmt.close();con.close();
+
+        if (!hasResults) {
+            System.out.println("\n⚠ No attempts yet for this category with your account!");
+        }
+
+        rs.close();
+        stmt.close();
+        con.close();
     }
 
     static boolean ask_user_back() {
